@@ -1,2 +1,5 @@
 support-copilot/
 .env
+*.pyc
+__pycache__/
+chroma_db/
