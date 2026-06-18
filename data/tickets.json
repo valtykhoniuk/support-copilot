@@ -1,0 +1,202 @@
+[
+  {
+    "id": "TKT-1001",
+    "status": "open",
+    "priority": "high",
+    "plan": "Beginner",
+    "subject": "Video stuck on buffering \u2014 A1 Module 3",
+    "created_at": "2026-06-14T09:12:00Z",
+    "updated_at": "2026-06-14T11:30:00Z",
+    "customer_email": "anna.kowalski@example.com"
+  },
+  {
+    "id": "TKT-1002",
+    "status": "in_progress",
+    "priority": "medium",
+    "plan": "Intermediate",
+    "subject": "Charged $30 twice on the same day",
+    "created_at": "2026-06-13T16:45:00Z",
+    "updated_at": "2026-06-14T08:00:00Z",
+    "customer_email": "marcus.lee@example.com"
+  },
+  {
+    "id": "TKT-1003",
+    "status": "resolved",
+    "priority": "medium",
+    "plan": "Beginner",
+    "subject": "Refund request \u2014 subscribed 4 days ago",
+    "created_at": "2026-06-10T10:00:00Z",
+    "updated_at": "2026-06-11T14:22:00Z",
+    "customer_email": "sophie.martin@example.com"
+  },
+  {
+    "id": "TKT-1004",
+    "status": "closed",
+    "priority": "low",
+    "plan": "Advanced",
+    "subject": "How to download completion certificate?",
+    "created_at": "2026-06-05T13:20:00Z",
+    "updated_at": "2026-06-06T09:15:00Z",
+    "customer_email": "james.wright@example.com"
+  },
+  {
+    "id": "TKT-1005",
+    "status": "open",
+    "priority": "high",
+    "plan": "Intermediate",
+    "subject": "Cannot log in \u2014 account locked after failed attempts",
+    "created_at": "2026-06-14T07:55:00Z",
+    "updated_at": "2026-06-14T07:55:00Z",
+    "customer_email": "elena.petrova@example.com"
+  },
+  {
+    "id": "TKT-1006",
+    "status": "in_progress",
+    "priority": "medium",
+    "plan": "Beginner",
+    "subject": "Mentor session cancelled \u2014 refund not received",
+    "created_at": "2026-06-12T18:30:00Z",
+    "updated_at": "2026-06-13T10:00:00Z",
+    "customer_email": "david.chen@example.com"
+  },
+  {
+    "id": "TKT-1007",
+    "status": "resolved",
+    "priority": "low",
+    "plan": "Advanced",
+    "subject": "Speaking exercise microphone not detected on Safari",
+    "created_at": "2026-06-08T11:10:00Z",
+    "updated_at": "2026-06-09T15:40:00Z",
+    "customer_email": "laura.gomez@example.com"
+  },
+  {
+    "id": "TKT-1008",
+    "status": "closed",
+    "priority": "medium",
+    "plan": "Intermediate",
+    "subject": "Upgrade to Advanced \u2014 when does access start?",
+    "created_at": "2026-06-01T08:00:00Z",
+    "updated_at": "2026-06-01T12:30:00Z",
+    "customer_email": "thomas.mueller@example.com"
+  },
+  {
+    "id": "TKT-1009",
+    "status": "open",
+    "priority": "medium",
+    "plan": "Beginner",
+    "subject": "Progress not syncing between laptop and phone",
+    "created_at": "2026-06-14T12:00:00Z",
+    "updated_at": "2026-06-14T12:00:00Z",
+    "customer_email": "priya.sharma@example.com"
+  },
+  {
+    "id": "TKT-1010",
+    "status": "resolved",
+    "priority": "high",
+    "plan": "Intermediate",
+    "subject": "PayPal renewal failed \u2014 access suspended",
+    "created_at": "2026-06-07T00:05:00Z",
+    "updated_at": "2026-06-08T09:00:00Z",
+    "customer_email": "oliver.brown@example.com"
+  },
+  {
+    "id": "TKT-1011",
+    "status": "closed",
+    "priority": "low",
+    "plan": "Beginner",
+    "subject": "Request to switch primary language from Spanish to French",
+    "created_at": "2026-05-28T14:00:00Z",
+    "updated_at": "2026-05-29T10:00:00Z",
+    "customer_email": "yuki.tanaka@example.com"
+  },
+  {
+    "id": "TKT-1012",
+    "status": "in_progress",
+    "priority": "high",
+    "plan": "Advanced",
+    "subject": "Refund outside 7-day window \u2014 dispute",
+    "created_at": "2026-06-11T20:00:00Z",
+    "updated_at": "2026-06-12T16:00:00Z",
+    "customer_email": "carlos.rivera@example.com"
+  },
+  {
+    "id": "TKT-1013",
+    "status": "open",
+    "priority": "medium",
+    "plan": "Intermediate",
+    "subject": "B2 Module 7 quiz score not saving",
+    "created_at": "2026-06-13T19:30:00Z",
+    "updated_at": "2026-06-14T06:00:00Z",
+    "customer_email": "fatima.al-hassan@example.com"
+  },
+  {
+    "id": "TKT-1014",
+    "status": "resolved",
+    "priority": "medium",
+    "plan": "Beginner",
+    "subject": "Email verification link expired",
+    "created_at": "2026-06-06T07:00:00Z",
+    "updated_at": "2026-06-06T08:45:00Z",
+    "customer_email": "noah.anderson@example.com"
+  },
+  {
+    "id": "TKT-1015",
+    "status": "closed",
+    "priority": "low",
+    "plan": "Advanced",
+    "subject": "Feature request: offline lesson downloads",
+    "created_at": "2026-05-20T12:00:00Z",
+    "updated_at": "2026-05-21T09:00:00Z",
+    "customer_email": "emma.wilson@example.com"
+  },
+  {
+    "id": "TKT-1016",
+    "status": "open",
+    "priority": "medium",
+    "plan": "Intermediate",
+    "subject": "Mentor no-show \u2014 need reschedule",
+    "created_at": "2026-06-14T15:00:00Z",
+    "updated_at": "2026-06-14T15:00:00Z",
+    "customer_email": "lucas.ferreira@example.com"
+  },
+  {
+    "id": "TKT-1017",
+    "status": "resolved",
+    "priority": "high",
+    "plan": "Beginner",
+    "subject": "Wrong plan selected at signup \u2014 want Beginner not Intermediate",
+    "created_at": "2026-06-09T09:30:00Z",
+    "updated_at": "2026-06-10T11:00:00Z",
+    "customer_email": "hannah.kim@example.com"
+  },
+  {
+    "id": "TKT-1018",
+    "status": "closed",
+    "priority": "medium",
+    "plan": "Advanced",
+    "subject": "C1 final exam \u2014 certificate PDF empty",
+    "created_at": "2026-06-03T17:00:00Z",
+    "updated_at": "2026-06-04T10:30:00Z",
+    "customer_email": "alex.novak@example.com"
+  },
+  {
+    "id": "TKT-1019",
+    "status": "in_progress",
+    "priority": "low",
+    "plan": "Beginner",
+    "subject": "Fourth device keeps getting logged out",
+    "created_at": "2026-06-12T08:00:00Z",
+    "updated_at": "2026-06-13T14:00:00Z",
+    "customer_email": "maya.patel@example.com"
+  },
+  {
+    "id": "TKT-1020",
+    "status": "resolved",
+    "priority": "medium",
+    "plan": "Intermediate",
+    "subject": "VAT charge on invoice \u2014 need breakdown",
+    "created_at": "2026-06-04T10:00:00Z",
+    "updated_at": "2026-06-05T16:00:00Z",
+    "customer_email": "giuseppe.rossi@example.com"
+  }
+]
