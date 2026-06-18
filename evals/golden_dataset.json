@@ -1,0 +1,202 @@
+[
+  {
+    "id": "q01",
+    "question": "How much does the Beginner plan cost?",
+    "category": "in_scope",
+    "expected_contains": ["20", "Beginner"],
+    "expected_sources_contain": "plans-and-pricing",
+    "must_refuse": false
+  },
+  {
+    "id": "q02",
+    "question": "What is the price of the Intermediate plan?",
+    "category": "in_scope",
+    "expected_contains": ["30", "Intermediate"],
+    "expected_sources_contain": "plans-and-pricing",
+    "must_refuse": false
+  },
+  {
+    "id": "q03",
+    "question": "How much does the Advanced plan cost per month?",
+    "category": "in_scope",
+    "expected_contains": ["40", "Advanced"],
+    "expected_sources_contain": "plans-and-pricing",
+    "must_refuse": false
+  },
+  {
+    "id": "q04",
+    "question": "What is the refund policy for a first subscription payment?",
+    "category": "in_scope",
+    "expected_contains": ["7", "refund"],
+    "expected_sources_contain": "refund-policy",
+    "must_refuse": false
+  },
+  {
+    "id": "q05",
+    "question": "How much does a single mentor session cost?",
+    "category": "in_scope",
+    "expected_contains": ["20", "mentor"],
+    "expected_sources_contain": "mentor-sessions",
+    "must_refuse": false
+  },
+  {
+    "id": "q06",
+    "question": "How long is a mentor session?",
+    "category": "in_scope",
+    "expected_contains": ["45"],
+    "expected_sources_contain": "mentor-sessions",
+    "must_refuse": false
+  },
+  {
+    "id": "q07",
+    "question": "Which CEFR levels are included in the Beginner plan?",
+    "category": "in_scope",
+    "expected_contains": ["A1", "A2"],
+    "expected_sources_contain": "plans-and-pricing",
+    "must_refuse": false
+  },
+  {
+    "id": "q08",
+    "question": "Which levels does the Intermediate plan unlock?",
+    "category": "in_scope",
+    "expected_contains": ["B1", "B2"],
+    "expected_sources_contain": "plans-and-pricing",
+    "must_refuse": false
+  },
+  {
+    "id": "q09",
+    "question": "How do I cancel my FoxSchool subscription?",
+    "category": "in_scope",
+    "expected_contains": ["cancel"],
+    "expected_sources_contain": "cancel-subscription",
+    "must_refuse": false
+  },
+  {
+    "id": "q10",
+    "question": "How many devices can I use at the same time?",
+    "category": "in_scope",
+    "expected_contains": ["3"],
+    "expected_sources_contain": "web-access",
+    "must_refuse": false
+  },
+  {
+    "id": "q11",
+    "question": "What is the support email address?",
+    "category": "in_scope",
+    "expected_contains": ["support@foxschool.app"],
+    "expected_sources_contain": "welcome",
+    "must_refuse": false
+  },
+  {
+    "id": "q12",
+    "question": "What languages can I learn on FoxSchool?",
+    "category": "in_scope",
+    "expected_contains": ["Spanish", "French"],
+    "expected_sources_contain": "general-faq",
+    "must_refuse": false
+  },
+  {
+    "id": "q13",
+    "question": "What percentage do I need to pass a module quiz?",
+    "category": "in_scope",
+    "expected_contains": ["70"],
+    "expected_sources_contain": "first-lesson",
+    "must_refuse": false
+  },
+  {
+    "id": "q14",
+    "question": "How far in advance must I cancel a mentor session for a full refund?",
+    "category": "in_scope",
+    "expected_contains": ["24"],
+    "expected_sources_contain": "mentor-sessions",
+    "must_refuse": false
+  },
+  {
+    "id": "q15",
+    "question": "Are subscription renewals refundable?",
+    "category": "in_scope",
+    "expected_contains": ["no", "renewal"],
+    "expected_sources_contain": "refund-policy",
+    "must_refuse": false
+  },
+  {
+    "id": "q16",
+    "question": "What's the weather in Tokyo today?",
+    "category": "out_of_scope",
+    "expected_contains": [],
+    "expected_sources_contain": null,
+    "must_refuse": true
+  },
+  {
+    "id": "q17",
+    "question": "Who won the FIFA World Cup in 2022?",
+    "category": "out_of_scope",
+    "expected_contains": [],
+    "expected_sources_contain": null,
+    "must_refuse": true
+  },
+  {
+    "id": "q18",
+    "question": "Write me a Python script to sort a list of numbers.",
+    "category": "out_of_scope",
+    "expected_contains": [],
+    "expected_sources_contain": null,
+    "must_refuse": true
+  },
+  {
+    "id": "q19",
+    "question": "What is the best restaurant in Paris?",
+    "category": "out_of_scope",
+    "expected_contains": [],
+    "expected_sources_contain": null,
+    "must_refuse": true
+  },
+  {
+    "id": "q20",
+    "question": "Explain quantum entanglement in simple terms.",
+    "category": "out_of_scope",
+    "expected_contains": [],
+    "expected_sources_contain": null,
+    "must_refuse": true
+  },
+  {
+    "id": "q21",
+    "question": "Can I get a full refund 20 days after my first subscription payment?",
+    "category": "adversarial",
+    "expected_contains": ["7", "no"],
+    "expected_sources_contain": "refund-policy",
+    "must_refuse": false
+  },
+  {
+    "id": "q22",
+    "question": "Does FoxSchool offer a free trial?",
+    "category": "adversarial",
+    "expected_contains": ["no", "free trial"],
+    "expected_sources_contain": "general-faq",
+    "must_refuse": false
+  },
+  {
+    "id": "q23",
+    "question": "Can I access C1 courses on the Beginner plan?",
+    "category": "adversarial",
+    "expected_contains": ["no", "C1"],
+    "expected_sources_contain": "plans-and-pricing",
+    "must_refuse": false
+  },
+  {
+    "id": "q24",
+    "question": "Does FoxSchool offer annual subscription plans?",
+    "category": "adversarial",
+    "expected_contains": ["no", "annual"],
+    "expected_sources_contain": "plans-and-pricing",
+    "must_refuse": false
+  },
+  {
+    "id": "q25",
+    "question": "Can I download lessons for offline viewing?",
+    "category": "adversarial",
+    "expected_contains": ["no", "offline"],
+    "expected_sources_contain": "general-faq",
+    "must_refuse": false
+  }
+]
