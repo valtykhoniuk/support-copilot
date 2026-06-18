@@ -3,7 +3,7 @@ import chromadb
 from dotenv import load_dotenv
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 
-CHROMA_DIR = Path(__file__).parent / "chroma_db"
+CHROMA_DIR = Path(__file__).parent.parent / "chroma_db"
 COLLECTION_NAME = "foxscool_kb"
 TOP_K = 5
 
