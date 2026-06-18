@@ -10,8 +10,8 @@ COLLECTION_NAME = "foxscool_kb"
 
 DATA_DIR = Path(__file__).parent / "data" / "kb"
 
-CHUNK_SIZE = 500
-CHUNK_OVERLAP = 50
+CHUNK_SIZE = 600
+CHUNK_OVERLAP = 100
 
 def ingest():
     embed_fn = SentenceTransformerEmbeddingFunction(
