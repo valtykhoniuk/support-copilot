@@ -3,4 +3,5 @@ support-copilot/
 *.pyc
 __pycache__/
 chroma_db/
-redteam/__pycache__
+redteam/__pycache__/
+redteam/reports/*.json
