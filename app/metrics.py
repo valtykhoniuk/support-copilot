@@ -20,7 +20,7 @@ def log_request(question: str, result: dict) -> None:
         "question": question[:200],
         "latency_ms": result.get("latency_ms"),
         "prompt_tokens": usage.get("prompt_tokens", 0),
-        "completion_tokens": usage.get("completion", 0),
+        "completion_tokens": usage.get("completion_tokens", 0),
         "cost_usd": result.get("cost_usd"),
     }
 
