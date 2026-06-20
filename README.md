@@ -256,3 +256,11 @@ Groundedness: 19/20 (95.0%) for model_graded
 
 Faithfulness 1.0 → answers are grounded in retrieved KB chunks.
 Context recall is the main improvement target (retrieval / chunking).
+
+============================================= warnings summary ==============================================
+evals/test_deepeval.py::test_faithfulness[q01]
+/Users/valeriiatykhoniuk/Documents/AI_ENGINEER/support-copilot/support-copilot/lib/python3.13/site-packages/deepeval/utils.py:194: DeprecationWarning: There is no current event loop
+loop = asyncio.get_event_loop()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================= 5 passed, 1 warning in 111.26s (0:01:51) ================
