@@ -244,3 +244,15 @@ support-copilot/
 | Production | Docker, multi-provider LLM, cloud deploy                      |
 
 Groundedness: 19/20 (95.0%) for model_graded
+
+### RAG quality (Ragas, 11-case subset)
+
+| Metric            | Score |
+| ----------------- | ----- |
+| Faithfulness      | 1.00  |
+| Answer relevancy  | 0.91  |
+| Context precision | 0.88  |
+| Context recall    | 0.64  |
+
+Faithfulness 1.0 → answers are grounded in retrieved KB chunks.
+Context recall is the main improvement target (retrieval / chunking).
