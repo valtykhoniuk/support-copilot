@@ -159,18 +159,42 @@ Every call to `ask()` logs metrics and (optionally) sends traces to LangSmith.
 
 Logging is handled by `app/metrics.py`. Tracing uses `@traceable` on `retrieve`, `generate_answer`, and `ask` in `app/rag.py`.
 
-Example log line (after warm-up):
+### LangSmith trace example
+
+Question: *"How much does the Beginner plan cost?"*
+
+![LangSmith trace showing ask → retrieve → generate_answer](docs/langsmith-trace.png)
+
+What you see in the trace:
+
+| Step | Time | What happened |
+|------|------|---------------|
+| `retrieve` | 7.0s | Vector search in Chroma (slow on first run — model load) |
+| `generate_answer` | 1.3s | GPT-4.1-mini wrote the answer from context |
+| **Total** | **8.3s** | Full `ask()` pipeline |
+
+Output fields logged in the trace:
+
+| Field | Example value |
+|-------|---------------|
+| `answer` | "The Beginner plan costs $20 per month…" |
+| `sources` | 3 KB files (pricing, FAQ, welcome) |
+| `prompt_tokens` | 959 |
+| `completion_tokens` | 17 |
+| `cost_usd` | ~$0.0004 |
+
+Second request to the same question is usually **1–3s** (embedding model already loaded).
+
+Example line in `logs/metrics.jsonl`:
 
 ```json
 {
-  "latency_ms": 1200,
-  "prompt_tokens": 850,
-  "completion_tokens": 45,
-  "cost_usd": 0.0004
+  "latency_ms": 8316,
+  "prompt_tokens": 959,
+  "completion_tokens": 17,
+  "cost_usd": 0.000411
 }
 ```
-
-First request after startup is slower (~8s) while embedding models load.
 
 ---
 
@@ -239,6 +263,8 @@ support-copilot/
 │   ├── prompts.csv
 │   └── run_csv_attacks.py
 ├── logs/metrics.jsonl   # gitignored
+├── docs/
+│   └── langsmith-trace.png
 ├── ingest.py
 └── .github/workflows/ci.yml
 ```
