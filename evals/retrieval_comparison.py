@@ -7,19 +7,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.rag import RETRIEVAL_MODE, retrieve_dense, retrieve_hybrid
+from evals.source_checks import expected_source_needles, hit_at_k, reciprocal_rank
 
 TOP_K = 5
-
-
-def hit_at_k(hits: list[dict], expected_source: str) -> bool:
-    return any(expected_source in h["source"] for h in hits)
-
-
-def reciprocal_rank(hits: list[dict], expected_source: str) -> float:
-    for i, h in enumerate(hits, start=1):
-        if expected_source in h["source"]:
-            return 1.0 / i
-    return 0.0
 
 
 def eval_retrieve(retrieve_fn, cases: list[dict], top_k: int = TOP_K) -> dict:
@@ -29,9 +19,9 @@ def eval_retrieve(retrieve_fn, cases: list[dict], top_k: int = TOP_K) -> dict:
 
     for case in cases:
         hits = retrieve_fn(case["question"], top_k=top_k)
-        expected = case["expected_sources_contain"]
-        ok = hit_at_k(hits, expected)
-        rr = reciprocal_rank(hits, expected)
+        expected = expected_source_needles(case)
+        ok = hit_at_k(hits, case)
+        rr = reciprocal_rank(hits, case)
         if ok:
             hits_total += 1
         else:
@@ -74,7 +64,7 @@ def main() -> None:
     cases = json.loads(path.read_text(encoding="utf-8"))
     cases = [
         c for c in cases
-        if not c.get("must_refuse") and c.get("expected_sources_contain")
+        if not c.get("must_refuse") and expected_source_needles(c)
     ]
 
     dense_result = eval_retrieve(retrieve_dense, cases)

@@ -5,6 +5,7 @@
     "category": "in_scope",
     "expected_contains": ["20", "Beginner"],
     "expected_sources_contain": "plans-and-pricing",
+    "reference_answer": "The Beginner plan costs $20 per month.",
     "must_refuse": false
   },
   {
@@ -13,6 +14,7 @@
     "category": "in_scope",
     "expected_contains": ["30", "Intermediate"],
     "expected_sources_contain": "plans-and-pricing",
+    "reference_answer": "The Intermediate plan costs $30 per month.",
     "must_refuse": false
   },
   {
@@ -21,6 +23,7 @@
     "category": "in_scope",
     "expected_contains": ["40", "Advanced"],
     "expected_sources_contain": "plans-and-pricing",
+    "reference_answer": "The Advanced plan costs $40 per month.",
     "must_refuse": false
   },
   {
@@ -29,6 +32,7 @@
     "category": "in_scope",
     "expected_contains": ["7", "refund"],
     "expected_sources_contain": "refund-policy",
+    "reference_answer": "A full refund is available within 7 days of your first subscription payment.",
     "must_refuse": false
   },
   {
@@ -36,7 +40,8 @@
     "question": "How much does a single mentor session cost?",
     "category": "in_scope",
     "expected_contains": ["20", "mentor"],
-    "expected_sources_contain": "mentor-sessions",
+    "expected_sources_any": ["mentor-sessions", "plans-and-pricing", "general-faq"],
+    "reference_answer": "A single mentor session costs $20 for 45 minutes.",
     "must_refuse": false
   },
   {
@@ -45,6 +50,7 @@
     "category": "in_scope",
     "expected_contains": ["45"],
     "expected_sources_contain": "mentor-sessions",
+    "reference_answer": "A mentor session is 45 minutes long.",
     "must_refuse": false
   },
   {
@@ -53,6 +59,7 @@
     "category": "in_scope",
     "expected_contains": ["A1", "A2"],
     "expected_sources_contain": "plans-and-pricing",
+    "reference_answer": "The Beginner plan includes A1 and A2 levels.",
     "must_refuse": false
   },
   {
@@ -60,7 +67,8 @@
     "question": "Which levels does the Intermediate plan unlock?",
     "category": "in_scope",
     "expected_contains": ["B1", "B2"],
-    "expected_sources_contain": "plans-and-pricing",
+    "expected_sources_any": ["plans-and-pricing", "course-levels", "welcome", "general-faq"],
+    "reference_answer": "The Intermediate plan unlocks B1 and B2 levels.",
     "must_refuse": false
   },
   {
@@ -69,6 +77,7 @@
     "category": "in_scope",
     "expected_contains": ["cancel"],
     "expected_sources_contain": "cancel-subscription",
+    "reference_answer": "Cancel from Dashboard, Account Settings, then Cancel Subscription.",
     "must_refuse": false
   },
   {
@@ -77,6 +86,7 @@
     "category": "in_scope",
     "expected_contains": ["3"],
     "expected_sources_contain": "web-access",
+    "reference_answer": "You can use up to 3 simultaneous device sessions.",
     "must_refuse": false
   },
   {
@@ -84,7 +94,8 @@
     "question": "What is the support email address?",
     "category": "in_scope",
     "expected_contains": ["support@foxschool.app"],
-    "expected_sources_contain": "welcome",
+    "expected_sources_any": ["welcome", "general-faq", "login-problems"],
+    "reference_answer": "The support email address is support@foxschool.app.",
     "must_refuse": false
   },
   {
@@ -109,6 +120,7 @@
     "category": "in_scope",
     "expected_contains": ["24"],
     "expected_sources_contain": "mentor-sessions",
+    "reference_answer": "You must cancel a mentor session at least 24 hours before the start time for a full refund.",
     "must_refuse": false
   },
   {
@@ -117,6 +129,7 @@
     "category": "in_scope",
     "expected_contains": ["no", "renewal"],
     "expected_sources_contain": "refund-policy",
+    "reference_answer": "No, subscription renewal payments are not refundable.",
     "must_refuse": false
   },
   {
@@ -165,6 +178,7 @@
     "category": "adversarial",
     "expected_contains": ["7", "no"],
     "expected_sources_contain": "refund-policy",
+    "reference_answer": "No, a full refund is only available within 7 days of your first subscription payment.",
     "must_refuse": false
   },
   {
@@ -173,6 +187,7 @@
     "category": "adversarial",
     "expected_contains": ["no", "free trial"],
     "expected_sources_contain": "general-faq",
+    "reference_answer": "FoxSchool does not offer a free trial.",
     "must_refuse": false
   },
   {

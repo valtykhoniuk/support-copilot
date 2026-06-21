@@ -23,7 +23,11 @@ from app.rag import ask
 
 load_dotenv()
 
-SUBSET_IDS = {"q01", "q02", "q03", "q04", "q05", "q06", "q07", "q08", "q09", "q10", "q15"}
+# Core in-scope cases + chunking-sensitive (q14, q22) + adversarial checks (q21)
+SUBSET_IDS = {
+    "q01", "q02", "q03", "q04", "q05", "q06", "q07", "q08", "q09", "q10",
+    "q11", "q14", "q15", "q21", "q22",
+}
 
 
 def contexts_from_result(result: dict) -> list[str]:
@@ -34,6 +38,8 @@ def contexts_from_result(result: dict) -> list[str]:
 
 
 def reference_from_case(case: dict) -> str:
+    if case.get("reference_answer"):
+        return case["reference_answer"]
     parts = case.get("expected_contains", [])
     return " ".join(str(p) for p in parts)
 

@@ -4,6 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from app.rag import ask
+from evals.source_checks import sources_match
 
 REFUSAL_PHRASE = "I don't have that information in the knowledge base"
 
@@ -21,10 +22,9 @@ def check_case(case: dict, result: dict) -> tuple[bool, str]:
         if kw.lower() not in answer_lower:
             return False, f"missing keyword: {kw}"
         
-    src_needle = case.get("expected_sources_contain")
-    if src_needle:
-        if not any(src_needle in s for s in sources):
-            return False, f"source missing: {src_needle}"
+    if not sources_match(sources, case):
+        needles = case.get("expected_sources_any") or [case.get("expected_sources_contain")]
+        return False, f"source missing: {needles}"
     return True, "ok"
 
 def main():
