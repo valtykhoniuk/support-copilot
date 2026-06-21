@@ -21,6 +21,13 @@ TOP_K = 5
 CANDIDATE_K = 20
 RRF_K = 60
 RETRIEVAL_MODE = os.getenv("RETRIEVAL_MODE", "dense").lower()
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai").lower()
+BEDROCK_MODEL_ID = os.getenv(
+    "BEDROCK_MODEL_ID",
+    "anthropic.claude-3-haiku-20240307-v1:0",
+)
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 
 _BM25_CACHE: dict | None = None
 
@@ -159,30 +166,62 @@ def build_context(hits: list[dict]) -> str:
     return "\n\n---\n\n".join(parts)
 
 
-@traceable(name="generate_answer")
-def generate_answer(query: str, context: str, hits: list[dict]) -> dict:
-    prompt = SYSTEM_PROMPT.format(context=context)
-
+def _generate_openai(system_prompt: str, query: str) -> dict:
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     response = client.chat.completions.create(
-        model="gpt-4.1-mini",
+        model=OPENAI_MODEL,
         messages=[
-            {"role": "system", "content": prompt},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": query},
         ],
         temperature=0,
     )
-    answer = response.choices[0].message.content
     usage = response.usage
-    sources = list(dict.fromkeys(h["source"] for h in hits))
-
     return {
-        "answer": answer,
-        "sources": sources,
+        "answer": response.choices[0].message.content,
         "usage": {
             "prompt_tokens": usage.prompt_tokens,
             "completion_tokens": usage.completion_tokens,
         },
+    }
+
+
+def _generate_bedrock(system_prompt: str, query: str) -> dict:
+    import boto3
+
+    client = boto3.client("bedrock-runtime", region_name=AWS_REGION)
+    response = client.converse(
+        modelId=BEDROCK_MODEL_ID,
+        system=[{"text": system_prompt}],
+        messages=[{"role": "user", "content": [{"text": query}]}],
+        inferenceConfig={"temperature": 0, "maxTokens": 1024},
+    )
+    usage = response.get("usage", {})
+    return {
+        "answer": response["output"]["message"]["content"][0]["text"],
+        "usage": {
+            "prompt_tokens": usage.get("inputTokens", 0),
+            "completion_tokens": usage.get("outputTokens", 0),
+        },
+    }
+
+
+@traceable(name="generate_answer")
+def generate_answer(query: str, context: str, hits: list[dict]) -> dict:
+    prompt = SYSTEM_PROMPT.format(context=context)
+
+    if LLM_PROVIDER == "bedrock":
+        gen = _generate_bedrock(prompt, query)
+    elif LLM_PROVIDER == "openai":
+        gen = _generate_openai(prompt, query)
+    else:
+        raise ValueError(f"Unsupported LLM_PROVIDER: {LLM_PROVIDER}")
+
+    sources = list(dict.fromkeys(h["source"] for h in hits))
+    return {
+        "answer": gen["answer"],
+        "sources": sources,
+        "usage": gen["usage"],
     }
 
 
@@ -201,8 +240,9 @@ def ask(query: str) -> dict:
         **gen,
         "context": context,
         "latency_ms": latency_ms,
-        "cost_usd": round(estimate_cost(pt, ct), 6),
+        "cost_usd": round(estimate_cost(pt, ct, provider=LLM_PROVIDER), 6),
         "retrieval_mode": RETRIEVAL_MODE,
+        "llm_provider": LLM_PROVIDER,
     }
 
     log_request(query, result)
