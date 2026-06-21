@@ -1,0 +1,10 @@
+support-copilot/
+.env
+chroma_db/
+logs/
+.git/
+__pycache__/
+*.pyc
+.cursor/
+.deepeval/
+redteam/reports/

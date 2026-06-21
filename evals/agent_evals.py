@@ -34,7 +34,7 @@ def check_case(case: dict, result: dict) -> tuple[bool, str]:
 
 
 def main() -> None:
-    dataset_path = Path(__file__).parent / "agent_dataset.json"
+    dataset_path = Path(__file__).parent / "golden_agent_dataset.json"
     cases = json.loads(dataset_path.read_text(encoding="utf-8"))
 
     passed = 0
