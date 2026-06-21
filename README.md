@@ -39,7 +39,7 @@ POST /ask  →  agent_ask()
 | Vector DB | Chroma (local) — KB branch only |
 | Embeddings | `all-MiniLM-L6-v2` (local, free) |
 | Retrieval | Dense semantic search, top-5 (`RETRIEVAL_MODE=dense`) |
-| LLM | OpenAI `gpt-4.1-mini`, temperature 0 — KB branch only |
+| LLM | `LLM_PROVIDER=openai` → `gpt-4.1-mini`; `bedrock` → Claude 3 Haiku via boto3 — KB branch only |
 | Prompt | Context-only + refusal + injection rules (`prompts.py` v1.1) |
 | Chunking | Heading-aware — split on `##` / `###`; ~119 chunks from 15 KB files |
 | MCP | `mcp/ticket_server.py` — same ticket lookup for Cursor / external hosts |
@@ -72,7 +72,7 @@ Configure in `.cursor/mcp.json` (see [Quickstart — MCP](#mcp-optional-cursor) 
 
 ## Quickstart
 
-**You need:** Python 3.13+, OpenAI API key.
+**You need:** Python 3.13+, and either an OpenAI API key (default) or AWS credentials for Bedrock.
 
 ```bash
 git clone https://github.com/valtykhoniuk/support-copilot.git
@@ -84,12 +84,34 @@ source support-copilot/bin/activate
 pip install -r requirements.txt
 ```
 
-Create `.env`:
+Copy env template and fill in keys:
+
+```bash
+cp .env.example .env
+```
+
+**OpenAI (default)** — in `.env`:
 
 ```env
+LLM_PROVIDER=openai
 OPENAI_API_KEY=your_key_here
+```
 
-# Optional — LangSmith tracing (see Observability)
+**Amazon Bedrock** — enable model access in AWS Console (e.g. Claude 3 Haiku), then:
+
+```env
+LLM_PROVIDER=bedrock
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
+```
+
+On EC2/ECS you can omit access keys and use an IAM role with `bedrock:InvokeModel`.
+
+Optional — LangSmith tracing:
+
+```env
 LANGCHAIN_TRACING_V2=true
 LANGCHAIN_API_KEY=lsv2_...
 LANGCHAIN_PROJECT=support-copilot
@@ -368,7 +390,7 @@ support-copilot/
 
 ## Roadmap
 
-**Done (v0.4)**
+**Done (v0.5)**
 
 - RAG pipeline with citations and refusal
 - 3-layer eval stack (rules + LLM judge + Ragas/DeepEval)
@@ -376,9 +398,10 @@ support-copilot/
 - LangSmith tracing + per-request metrics log
 - **Phase F — Advanced retrieval:** heading chunking; hybrid rejected; golden **25/25**; Ragas recall **0.93** ([details](how_I_advanced_rag.md))
 - **Phase G — Agent + MCP:** router + ticket/refund tools + PII guardrails; agent evals **10/10**; MCP server `foxschool-tickets` (2 tools)
+- **Phase H (partial):** Docker · **Bedrock** switch (`LLM_PROVIDER=openai|bedrock`)
 
 **Next**
 
 | Phase | Goal |
 |-------|------|
-| H — Deploy | Docker, second LLM provider, cloud hosting |
+| H — Deploy | AWS hosting (EC2/ECS) · final README diagram |
