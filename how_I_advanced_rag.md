@@ -41,7 +41,7 @@ Measured with golden evals, LLM judge, Ragas, and (after F0) retrieval-only metr
 
 | Check | Tool | Result |
 |-------|------|--------|
-| Golden set | `evals/run_evals.py` | **25/25 (100%)** |
+| Golden set | `evals/run_evals.py` | **23/25 (92%)** — q14, q22 fail (chunk-level; see [case studies](#retrieval-pitfall-case-studies)) |
 | Groundedness | `evals/model_graded.py` | **19/20 (95%)** |
 
 ### RAG metrics (Ragas, 11 in-scope questions)
@@ -73,9 +73,11 @@ Generation is not the bottleneck: **faithfulness is 1.0** and keyword evals pass
 - wrong **chunk** within the right file (600-char splits),
 - or the answer needs **more than one chunk**, while only part of it ranks high.
 
-**MRR 0.648** confirms ranking noise: the correct file is often 2nd or 3rd, not 1st — hybrid should mainly improve **MRR** and chunk order.
+**MRR 0.648** confirms ranking noise: the correct file is often 2nd or 3rd, not 1st.
 
-Dense search handles paraphrases well; hybrid (BM25 + dense) adds exact-term matching (`$20`, `7-day`) and should push the best chunk higher via RRF.
+**Golden evals 23/25** on dense — failures are **q14** (mentor cancel window) and **q22** (free trial). Both retrieve the right **file** but the wrong **chunk** inside it (see case studies below). Generation is faithful to what it receives; the gap is chunking + ranking within a file.
+
+Dense search handles paraphrases well. Hybrid (BM25 + dense) was tested next — it did **not** fix chunk-level misses (see Results).
 
 ---
 
@@ -112,11 +114,23 @@ Each technique below is applied **one at a time**. After each change we re-run r
 
 **Implementation:** `retrieve_hybrid()` in `app/rag.py`, BM25 over Chroma chunks + RRF merge. Toggle via `RETRIEVAL_MODE=hybrid` in `.env`.
 
-**Status:** Tested — retrieval benchmark recorded; Ragas pending
+**Status:** Tested end-to-end — **not deployed** (dense remains default)
 
 ---
 
-### 3. Cross-encoder reranking (optional)
+### 3. Heading-aware chunking (next)
+
+**What:** Split markdown on `##` headings so each FAQ section / article section becomes its own chunk, instead of fixed 600-char windows.
+
+**Why:** q14 and q22 fail because the answer lives in chunk N but retrieval returns chunk 0 or 3 from the same file. Heading splits align chunks with user questions (“free trial”, “session rules”).
+
+**Expected effect:** Higher **context recall** and golden pass rate on q14/q22 without changing the retriever.
+
+**Status:** Planned — after hybrid negative result
+
+---
+
+### 4. Cross-encoder reranking (optional)
 
 **What:** Retrieve top-20 candidates with hybrid search, then re-score each (question, chunk) pair with a cross-encoder model (`ms-marco-MiniLM-L-6-v2`), keep top-5.
 
@@ -134,9 +148,9 @@ Each technique below is applied **one at a time**. After each change we re-run r
 
 | Technique | Reason skipped |
 |-----------|----------------|
-| Query expansion | Support KB wording is fairly stable; hybrid covers most gaps |
-| Sentence-window retrieval | KB articles are short; chunk overlap already 100 chars |
-| Chunk size A/B (500 vs 1000) | Possible follow-up if recall still low after hybrid |
+| Query expansion | Support KB wording is fairly stable; low ROI for this KB |
+| Sentence-window retrieval | KB articles are short; heading split is a better fit |
+| Chunk size A/B (500 vs 1000) | Possible follow-up if recall still low after heading split |
 
 ---
 
@@ -148,9 +162,10 @@ Summary of measured impact. Update this section after each technique is deployed
 
 | Configuration | Hit@5 | MRR | Context recall | Context precision | Faithfulness | Golden evals |
 |---------------|-------|-----|----------------|-------------------|--------------|--------------|
-| **Dense only (baseline)** | **100%** | **0.648** | **0.64** | **0.88** | **1.00** | 25/25 |
+| **Dense only (baseline)** | **100%** | **0.648** | **0.64** | **0.88** | **1.00** | **23/25** |
 | + Hybrid (BM25 + dense) | **95%** | **0.612** | **0.64** | **0.82** | **1.00** | **24/25** |
-| Dense Ragas re-run *(sanity)* | 100% | 0.648 | 0.55 | 0.91 | 1.00 | 25/25 *(with dense)* |
+| Dense Ragas re-run *(sanity)* | 100% | 0.648 | 0.55 | 0.91 | 1.00 | 23/25 *(with dense)* |
+| + Heading-aware chunking | — | — | — | — | — | — |
 | + Rerank | — | — | — | — | — | — |
 
 **Target:** context recall ≥ **0.75** without breaking faithfulness or golden eval pass rate.
@@ -172,7 +187,9 @@ Summary of measured impact. Update this section after each technique is deployed
 
 **Retrieval:** Hit@5 **100% (20/20)** · MRR **0.648**
 
-**Notes:** Hit@5 already at ceiling — next gains should show in **MRR** and Ragas **context recall**, not file hit rate. LLM and prompts unchanged since Phase E.
+**Golden evals:** **23/25** — q14 (missing `24`), q22 (missing `free trial`); both are chunk-level retrieval misses, not LLM hallucination.
+
+**Notes:** Hit@5 already at ceiling — next gains should show in **MRR**, Ragas **context recall**, and golden pass rate, not file hit rate. LLM and prompts unchanged since Phase E.
 
 ---
 
@@ -204,7 +221,37 @@ Summary of measured impact. Update this section after each technique is deployed
 
 **Decision:** **Do not deploy hybrid.** Revert `.env` to `RETRIEVAL_MODE=dense`. Hybrid did not improve context recall, lowered precision, and broke q11.
 
-**Notes:** On file-level metrics, hybrid did not beat dense. Ragas confirms no recall gain. Negative experiment — documented with numbers. Next lever for recall gaps on q03/q04/q05/q09: **chunking** or **rerank**, not BM25 hybrid.
+**Notes:** On file-level metrics, hybrid did not beat dense. Ragas confirms no recall gain. Negative experiment — documented with numbers. Next lever: **heading-aware chunking**, then **rerank** if needed — not BM25 hybrid.
+
+---
+
+### Dense chunk pitfall — q14 (mentor cancellation window)
+
+| | Detail |
+|---|--------|
+| **Question** | How far in advance must I cancel a mentor session for a full refund? |
+| **Expected keyword** | `24` (24+ hours) |
+| **Expected source** | `mentor-sessions.md` |
+| **Sources returned** | mentor-sessions ✓, cancel-subscription, refund-policy, general-faq |
+| **Chunk retrieved (hit 1)** | End of `mentor-sessions.md` — “Refunds for mentor sessions… **Completed sessions are never refundable**” |
+| **Chunk that has the answer** | **Chunk 2** — `## Session rules` table: “Full refund if cancelled **24+ hours** before start” |
+| **LLM answer** | Correctly says context does not specify 24h — it only saw the refund footer chunk |
+| **Root cause** | Fixed 600-char split ranks wrong subsection within the right file |
+
+---
+
+### Dense chunk pitfall — q22 (free trial)
+
+| | Detail |
+|---|--------|
+| **Question** | Does FoxSchool offer a free trial? |
+| **Expected keywords** | `no`, `free trial` |
+| **Expected source** | `general-faq.md` |
+| **Sources returned** | general-faq ✓ (rank 1), create-account, welcome, mentor-sessions |
+| **Chunk retrieved (hit 1)** | **Chunk 0** — FAQ intro + pricing table (“What is FoxSchool?”, “How much does FoxSchool cost?”) |
+| **Chunk that has the answer** | **Chunk 2** — `## Is there a free trial?` → “FoxSchool **does not offer a free trial**” |
+| **LLM answer** | “I don't have that information in the knowledge base” — faithful refusal given empty context on free trial |
+| **Root cause** | Query embedding matches FAQ header/pricing; free-trial section is ~1200 chars into the file |
 
 ---
 
@@ -237,9 +284,15 @@ Summary of measured impact. Update this section after each technique is deployed
 
 ---
 
-## Retrieval pitfall (case study)
+## Retrieval pitfall (case studies)
 
-See **Hybrid regression case (q11)** above — example where hybrid hurt retrieval vs dense.
+| Case | Mode | Problem |
+|------|------|---------|
+| **q14** | Dense | Right file, wrong chunk — Session rules vs refund footer |
+| **q22** | Dense | Right file, wrong chunk — FAQ intro vs free-trial section |
+| **q11** | Hybrid | Wrong files — BM25 matched generic “support” tokens |
+
+These show **Hit@5 = 100% can hide chunk-level failures** — Ragas context recall (0.64) and golden keyword checks catch what file-level metrics miss.
 
 ---
 
@@ -286,4 +339,4 @@ question → hybrid (top-20) → cross-encoder rerank (top-5) → LLM
 
 ---
 
-*Last updated: Hybrid tested end-to-end — not deployed; dense remains production mode.*
+*Last updated: Hybrid rejected; dense baseline golden 23/25; q14/q22 chunk pitfall documented; next: heading-aware chunking.*
