@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from app.rag import ask
+from app.agent import agent_ask
 
 app = FastAPI(title="FoxSchool Support Copilot")
 
@@ -17,5 +17,5 @@ def health():
 
 @app.post("/ask", response_model=AskResponse)
 def ask_endpoint(body: AskRequest):
-    result = ask(body.question)
+    result = agent_ask(body.question)
     return AskResponse(answer=result['answer'], sources=result['sources'])
