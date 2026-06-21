@@ -11,9 +11,10 @@ This is a learning project built like a small production RAG app: automated test
 ## What it does
 
 1. User asks a question (API or script).
-2. The app finds relevant KB chunks in Chroma (vector search).
-3. GPT-4.1-mini writes an answer **only from those chunks**.
-4. Response includes `answer` + `sources[]`.
+2. **Agent router** picks a path: knowledge base (RAG), ticket lookup, or refund calculator.
+3. **Guardrails** block PII requests (e.g. customer email on a ticket) before any tool runs.
+4. KB questions → Chroma retrieval → GPT-4.1-mini answer **only from retrieved chunks**.
+5. Response includes `answer` + `sources[]`.
 
 Out-of-scope questions get a fixed refusal phrase instead of a guess.
 
@@ -22,28 +23,50 @@ Out-of-scope questions get a fixed refusal phrase instead of a guess.
 ## Architecture
 
 ```
-data/kb/*.md  →  ingest.py  →  Chroma (chroma_db/)
-                                    │
-User question  →  POST /ask  →  retrieve top-5 chunks
-                                    │
-                                    ▼
-                         system prompt + context
-                                    │
-                                    ▼
-                         OpenAI gpt-4.1-mini  →  answer + sources
+POST /ask  →  agent_ask()
+                  │
+                  ├─ guardrails (PII?) ──→ refusal
+                  │
+                  ├─ route: ticket ──→ lookup_ticket()     ← data/tickets.json
+                  ├─ route: refund ──→ calculate_refund()   ← 7-day policy rule
+                  └─ route: kb     ──→ RAG (Chroma top-5 → GPT-4.1-mini)
 ```
 
 | Piece | Choice |
 |-------|--------|
-| API | FastAPI — `/health`, `/ask` |
-| Vector DB | Chroma (local) |
+| API | FastAPI — `/health`, `/ask` → `agent_ask()` |
+| Agent | Rule-based router + tools + guardrails (`agent.py`, `router.py`, `tools.py`) |
+| Vector DB | Chroma (local) — KB branch only |
 | Embeddings | `all-MiniLM-L6-v2` (local, free) |
 | Retrieval | Dense semantic search, top-5 (`RETRIEVAL_MODE=dense`) |
-| LLM | OpenAI `gpt-4.1-mini`, temperature 0 |
+| LLM | OpenAI `gpt-4.1-mini`, temperature 0 — KB branch only |
 | Prompt | Context-only + refusal + injection rules (`prompts.py` v1.1) |
 | Chunking | Heading-aware — split on `##` / `###`; ~119 chunks from 15 KB files |
+| MCP | `mcp/ticket_server.py` — same ticket lookup for Cursor / external hosts |
 
 Retrieval experiments (hybrid BM25 + RRF, reranking) are documented in [how_I_advanced_rag.md](how_I_advanced_rag.md). Hybrid was tested and **not deployed**; heading chunking is production.
+
+### Agent routes
+
+| Route | Trigger | Handler | LLM? |
+|-------|---------|---------|------|
+| `kb` | default | `rag.ask()` — Chroma + GPT | Yes |
+| `ticket` | `TKT-xxxx` in question | `lookup_ticket()` | No |
+| `refund` | refund keywords + days | `calculate_refund_eligibility()` | No |
+| `blocked_pii` | email + ticket patterns | refusal | No |
+
+Ticket and refund paths are deterministic (no LLM cost). `lookup_ticket()` never returns `customer_email`.
+
+### MCP server (ticket lookup)
+
+Ticket tools are also exposed as an **MCP server** so Cursor (or Claude Desktop) can call them without running the FastAPI app. Same logic as the agent — `app/tools.py` reused in `mcp/ticket_server.py`.
+
+| Tool | What it does |
+|------|----------------|
+| `get_ticket_status` | Status, subject, plan for one ticket ID |
+| `list_open_tickets` | All open tickets (no PII) |
+
+Configure in `.cursor/mcp.json` (see [Quickstart — MCP](#mcp-optional-cursor) below). In Cursor: **Settings → Tools & MCP** — server `foxschool-tickets` should show **2 tools enabled**.
 
 ---
 
@@ -84,13 +107,42 @@ Run the API:
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Try a question:
+Try questions:
 
 ```bash
+# KB (RAG)
 curl -X POST http://127.0.0.1:8000/ask \
   -H "Content-Type: application/json" \
   -d '{"question": "How much does the Beginner plan cost?"}'
+
+# Ticket tool (no LLM)
+curl -X POST http://127.0.0.1:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What is the status of ticket TKT-1002?"}'
+
+# Refund calculator
+curl -X POST http://127.0.0.1:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Can I get a full refund 20 days after my first subscription payment?"}'
 ```
+
+### MCP (optional — Cursor)
+
+Add `.cursor/mcp.json` in the project root:
+
+```json
+{
+  "mcpServers": {
+    "foxschool-tickets": {
+      "command": "/path/to/venv/bin/python",
+      "args": ["/path/to/support-copilot/mcp/ticket_server.py"],
+      "cwd": "/path/to/support-copilot"
+    }
+  }
+}
+```
+
+Reload MCP in Cursor settings, then ask in Agent chat: *"Use foxschool-tickets MCP to get status of TKT-1002"*.
 
 ---
 
@@ -110,8 +162,11 @@ Layer 3 — RAG metrics  faithfulness, relevancy, retrieval quality
 | **2 — LLM judge** | `evals/model_graded.py` | Groundedness — no unsupported claims | **19/20 (95%)** | Local |
 | **3 — Ragas** | `evals/ragas_eval.py` | 4 RAG metrics on 15 questions | see table below | Local |
 | **3 — DeepEval** | `evals/test_deepeval.py` | Faithfulness on 5 questions | **5/5 passed** | Yes (pytest) |
+| **Agent** | `evals/agent_evals.py` | Routes, tools, PII block | **10/10 (100%)** | Local |
 
 ### Layer 1 — Golden set (25 questions)
+
+Runs through **`agent_ask()`** (production path), not RAG alone.
 
 | Type | Count | Example |
 |------|-------|---------|
@@ -121,6 +176,14 @@ Layer 3 — RAG metrics  faithfulness, relevancy, retrieval quality
 
 ```bash
 python ingest.py && python evals/run_evals.py
+```
+
+### Agent evals (10 questions)
+
+Covers ticket lookup, refund calculator, PII guardrail, and KB fallback. Checks `route`, keywords, and forbidden content (no email leak).
+
+```bash
+python evals/agent_evals.py
 ```
 
 ### Layer 2 — LLM-as-judge
@@ -157,14 +220,14 @@ Re-run evals after changing prompts, chunking, or retrieval.
 
 ## Observability
 
-Every call to `ask()` logs metrics and (optionally) sends traces to LangSmith.
+Every `/ask` call goes through `agent_ask()` and logs metrics; KB branches also trace in LangSmith.
 
 | What | Where | Why |
 |------|-------|-----|
 | Latency, tokens, cost | `logs/metrics.jsonl` | Per-request cost and speed |
 | Full trace (retrieve → LLM) | [LangSmith](https://smith.langchain.com) project `support-copilot` | Debug failures visually |
 
-Logging is handled by `app/metrics.py`. Tracing uses `@traceable` on `retrieve`, `generate_answer`, and `ask` in `app/rag.py`.
+Logging is handled by `app/metrics.py`. Tracing uses `@traceable` on `agent_ask`, `handle_ticket`, `handle_refund`, and RAG steps in `app/rag.py`.
 
 ### LangSmith trace example
 
@@ -253,18 +316,30 @@ Ragas, model_graded, and prompt_attempts run locally to save API cost.
 ```
 support-copilot/
 ├── app/
-│   ├── main.py          # FastAPI
+│   ├── main.py          # FastAPI → agent_ask()
+│   ├── agent.py         # orchestrator
+│   ├── router.py        # kb | ticket | refund
+│   ├── tools.py         # lookup_ticket, calculate_refund
+│   ├── guardrails.py    # PII block + answer formatting
 │   ├── rag.py           # retrieve + generate + tracing
 │   ├── prompts.py       # system prompt v1.1
 │   └── metrics.py       # cost/latency logging
-├── data/kb/             # 15 synthetic KB articles
+├── mcp/
+│   └── ticket_server.py # MCP: get_ticket_status, list_open_tickets
+├── .cursor/
+│   └── mcp.json         # Cursor MCP config (local paths)
+├── data/
+│   ├── kb/              # 15 synthetic KB articles
+│   └── tickets.json     # 20 support tickets
 ├── evals/
 │   ├── golden_dataset.json
-│   ├── run_evals.py     # Layer 1
+│   ├── golden_agent_dataset.json
+│   ├── run_evals.py     # Layer 1 (via agent)
+│   ├── agent_evals.py   # agent routes + PII
 │   ├── model_graded.py  # Layer 2
 │   ├── ragas_eval.py    # Layer 3
-│   ├── source_checks.py # shared source attribution for evals
-│   ├── retrieval_comparison.py  # Hit@5 / MRR benchmark
+│   ├── source_checks.py
+│   ├── retrieval_comparison.py
 │   └── test_deepeval.py # Layer 3 (CI)
 ├── redteam/
 │   ├── manual_attacks.py
@@ -275,7 +350,7 @@ support-copilot/
 ├── docs/
 │   └── langsmith-trace.png
 ├── ingest.py
-├── how_I_advanced_rag.md  # Phase F experiments + metrics
+├── how_I_advanced_rag.md
 └── .github/workflows/ci.yml
 ```
 
@@ -287,22 +362,23 @@ support-copilot/
 - **Dense search only** — hybrid BM25 + RRF tested twice, Hit@5 worse than dense; not deployed (see [how_I_advanced_rag.md](how_I_advanced_rag.md)).
 - **Heading chunking** — fixed chunk-level misses (e.g. FAQ sections); golden evals **25/25**; MRR slightly lower because duplicate facts rank from FAQ vs canonical docs.
 - **Keyword evals** — fast but brittle; Layer 2–3 add semantic checks. Golden source checks allow `expected_sources_any` when the same fact lives in multiple KB files.
+- **Rule-based router** — simple and testable; no LLM tool-calling loop yet. Ticket route wins over refund when both match.
 
 ---
 
 ## Roadmap
 
-**Done (v0.3)**
+**Done (v0.4)**
 
 - RAG pipeline with citations and refusal
 - 3-layer eval stack (rules + LLM judge + Ragas/DeepEval)
 - Red-team harness + CI security gates
 - LangSmith tracing + per-request metrics log
-- **Phase F — Advanced retrieval:** heading-aware chunking deployed; hybrid rejected; golden **25/25**; Ragas context recall **0.93** ([details](how_I_advanced_rag.md))
+- **Phase F — Advanced retrieval:** heading chunking; hybrid rejected; golden **25/25**; Ragas recall **0.93** ([details](how_I_advanced_rag.md))
+- **Phase G — Agent + MCP:** router + ticket/refund tools + PII guardrails; agent evals **10/10**; MCP server `foxschool-tickets` (2 tools)
 
 **Next**
 
 | Phase | Goal |
 |-------|------|
-| G — Agents | Router, tools (ticket lookup, refund calculator), MCP, agent-evals |
 | H — Deploy | Docker, second LLM provider, cloud hosting |

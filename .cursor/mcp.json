@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "foxschool-tickets": {
+      "command": "/Users/valeriiatykhoniuk/Documents/AI_ENGINEER/support-copilot/support-copilot/bin/python",
+      "args": [
+        "/Users/valeriiatykhoniuk/Documents/AI_ENGINEER/support-copilot/mcp/ticket_server.py"
+      ],
+      "cwd": "/Users/valeriiatykhoniuk/Documents/AI_ENGINEER/support-copilot"
+    }
+  }
+}
