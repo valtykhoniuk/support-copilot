@@ -34,7 +34,7 @@ jobs:
       - name: DeepEval faithfulness (5-case subset)
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: pip install deepeval pytest && pytest evals/test_deepeval.py -q
+        run: pytest evals/test_deepeval.py -q
 
       - name: Red team — manual attacks (gate ≥5/6)
         env:
