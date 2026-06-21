@@ -38,9 +38,12 @@ User question  →  POST /ask  →  retrieve top-5 chunks
 | API | FastAPI — `/health`, `/ask` |
 | Vector DB | Chroma (local) |
 | Embeddings | `all-MiniLM-L6-v2` (local, free) |
+| Retrieval | Dense semantic search, top-5 (`RETRIEVAL_MODE=dense`) |
 | LLM | OpenAI `gpt-4.1-mini`, temperature 0 |
 | Prompt | Context-only + refusal + injection rules (`prompts.py` v1.1) |
-| Chunking | 600 chars, 100 overlap |
+| Chunking | Heading-aware — split on `##` / `###`; ~119 chunks from 15 KB files |
+
+Retrieval experiments (hybrid BM25 + RRF, reranking) are documented in [how_I_advanced_rag.md](how_I_advanced_rag.md). Hybrid was tested and **not deployed**; heading chunking is production.
 
 ---
 
@@ -105,7 +108,7 @@ Layer 3 — RAG metrics  faithfulness, relevancy, retrieval quality
 |-------|--------|----------------|--------|--------|
 | **1 — Rules** | `evals/run_evals.py` | Keywords, sources, refusal phrase | **25/25 (100%)** | Yes (≥80%) |
 | **2 — LLM judge** | `evals/model_graded.py` | Groundedness — no unsupported claims | **19/20 (95%)** | Local |
-| **3 — Ragas** | `evals/ragas_eval.py` | 4 RAG metrics on 11 questions | see table below | Local |
+| **3 — Ragas** | `evals/ragas_eval.py` | 4 RAG metrics on 15 questions | see table below | Local |
 | **3 — DeepEval** | `evals/test_deepeval.py` | Faithfulness on 5 questions | **5/5 passed** | Yes (pytest) |
 
 ### Layer 1 — Golden set (25 questions)
@@ -128,14 +131,18 @@ A second LLM call reads the question, retrieved context, and answer. It scores w
 python evals/model_graded.py
 ```
 
-### Layer 3 — Ragas (11-case subset)
+### Layer 3 — Ragas (15-case subset)
+
+Subset: q01–q11, q14, q15, q21, q22 — includes chunking-sensitive cases (mentor cancel, free trial). Uses sentence-level `reference_answer` in `golden_dataset.json`, not keywords only.
 
 | Metric | Score | Plain English |
 |--------|-------|---------------|
-| Faithfulness | **1.00** | Answers stick to retrieved text — no made-up facts |
-| Answer relevancy | **0.91** | Answers stay on topic |
-| Context precision | **0.88** | Retrieved chunks are mostly relevant |
-| Context recall | **0.64** | Retrieval sometimes misses info — target for Phase F |
+| Faithfulness | **0.99** | Answers stick to retrieved text — no made-up facts |
+| Answer relevancy | **0.92** | Answers stay on topic |
+| Context precision | **0.86** | Retrieved chunks are mostly relevant |
+| Context recall | **0.93** | Retrieved context covers the reference answer |
+
+Measured with **heading-aware chunking + dense retrieval** (Phase F production config).
 
 ```bash
 python evals/ragas_eval.py   # takes a few minutes, many LLM calls
@@ -256,6 +263,8 @@ support-copilot/
 │   ├── run_evals.py     # Layer 1
 │   ├── model_graded.py  # Layer 2
 │   ├── ragas_eval.py    # Layer 3
+│   ├── source_checks.py # shared source attribution for evals
+│   ├── retrieval_comparison.py  # Hit@5 / MRR benchmark
 │   └── test_deepeval.py # Layer 3 (CI)
 ├── redteam/
 │   ├── manual_attacks.py
@@ -266,6 +275,7 @@ support-copilot/
 ├── docs/
 │   └── langsmith-trace.png
 ├── ingest.py
+├── how_I_advanced_rag.md  # Phase F experiments + metrics
 └── .github/workflows/ci.yml
 ```
 
@@ -274,25 +284,25 @@ support-copilot/
 ## Trade-offs
 
 - **Local embeddings** — free; cloud embeddings may improve retrieval.
-- **Dense search only** — no BM25/hybrid yet (Phase F).
-- **Keyword evals** — fast but brittle; Layer 2–3 add semantic checks.
-- **Context recall 0.64** — chunking/retrieval can improve (Phase F).
+- **Dense search only** — hybrid BM25 + RRF tested twice, Hit@5 worse than dense; not deployed (see [how_I_advanced_rag.md](how_I_advanced_rag.md)).
+- **Heading chunking** — fixed chunk-level misses (e.g. FAQ sections); golden evals **25/25**; MRR slightly lower because duplicate facts rank from FAQ vs canonical docs.
+- **Keyword evals** — fast but brittle; Layer 2–3 add semantic checks. Golden source checks allow `expected_sources_any` when the same fact lives in multiple KB files.
 
 ---
 
 ## Roadmap
 
-**Done (v0.2)**
+**Done (v0.3)**
 
 - RAG pipeline with citations and refusal
 - 3-layer eval stack (rules + LLM judge + Ragas/DeepEval)
 - Red-team harness + CI security gates
 - LangSmith tracing + per-request metrics log
+- **Phase F — Advanced retrieval:** heading-aware chunking deployed; hybrid rejected; golden **25/25**; Ragas context recall **0.93** ([details](how_I_advanced_rag.md))
 
 **Next**
 
 | Phase | Goal |
 |-------|------|
-| F — Retrieval | Hybrid search, reranking — improve context recall |
-| G — Agents | Tools: ticket lookup, refund calculator, MCP |
+| G — Agents | Router, tools (ticket lookup, refund calculator), MCP, agent-evals |
 | H — Deploy | Docker, second LLM provider, cloud hosting |
