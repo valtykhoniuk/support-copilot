@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from app.rag import ask
+from app.agent import agent_ask as ask
 from evals.source_checks import sources_match
 
 REFUSAL_PHRASE = "I don't have that information in the knowledge base"

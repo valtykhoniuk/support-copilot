@@ -45,3 +45,6 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: python redteam/run_csv_attacks.py
+
+      - name: Agent eval gate
+        run: python evals/agent_evals.py
