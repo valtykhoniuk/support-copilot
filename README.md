@@ -146,6 +146,63 @@ Reload MCP in Cursor settings, then ask in Agent chat: *"Use foxschool-tickets M
 
 ---
 
+## Deployment
+
+### Docker (local)
+
+```bash
+cp .env.example .env   # add OPENAI_API_KEY
+docker compose build
+docker compose up -d
+curl http://127.0.0.1:8000/health
+```
+
+First start runs `ingest.py` automatically if `chroma_db` is empty (~119 chunks). Volumes persist Chroma and metrics between restarts.
+
+### AWS EC2 (cloud)
+
+Deployed on **Ubuntu 24.04 + Docker Compose** (`t3.small`, `us-east-1`).
+
+| Piece | Choice |
+|-------|--------|
+| Host | EC2 `t3.small`, 24 GiB EBS |
+| Region | `us-east-1` |
+| Security group | SSH (22) → My IP; API (8000) → `0.0.0.0/0` |
+| LLM | OpenAI via `.env` on the instance |
+
+**On the instance (after SSH):**
+
+```bash
+sudo apt update && sudo apt install -y docker.io docker-compose-v2 git
+sudo usermod -aG docker ubuntu && exit   # re-login
+git clone https://github.com/valtykhoniuk/support-copilot.git
+cd support-copilot
+nano .env   # OPENAI_API_KEY=...
+docker compose up -d
+docker compose logs -f
+```
+
+**Test from your machine** (replace `PUBLIC_IP` with the EC2 public IPv4):
+
+```bash
+curl http://PUBLIC_IP:8000/health
+curl -X POST http://PUBLIC_IP:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "How much does the Beginner plan cost?"}'
+```
+
+### Live demo (verified)
+
+Docker on EC2 → `GET /health` and `POST /ask` return **200 OK** with cited KB answer:
+
+![AWS EC2 deploy — docker compose up, health check, and /ask from local curl](docs/aws-deploy-demo.png)
+
+### Cost note
+
+The EC2 instance is **stopped when not in use** (demos / interviews only). After **Stop → Start**, the public IP may change — check EC2 console for the new address. EBS storage still incurs a small charge while stopped.
+
+---
+
 ## How we test quality (3 layers)
 
 Each layer catches different mistakes. Together they give a fuller picture than keywords alone.
@@ -348,7 +405,12 @@ support-copilot/
 │   └── run_csv_attacks.py
 ├── logs/metrics.jsonl   # gitignored
 ├── docs/
-│   └── langsmith-trace.png
+│   ├── langsmith-trace.png
+│   └── aws-deploy-demo.png
+├── Dockerfile
+├── docker-compose.yml
+├── scripts/
+│   └── docker-entrypoint.sh
 ├── ingest.py
 ├── how_I_advanced_rag.md
 └── .github/workflows/ci.yml
@@ -368,7 +430,7 @@ support-copilot/
 
 ## Roadmap
 
-**Done (v0.4)**
+**Done (v0.5)**
 
 - RAG pipeline with citations and refusal
 - 3-layer eval stack (rules + LLM judge + Ragas/DeepEval)
@@ -376,9 +438,10 @@ support-copilot/
 - LangSmith tracing + per-request metrics log
 - **Phase F — Advanced retrieval:** heading chunking; hybrid rejected; golden **25/25**; Ragas recall **0.93** ([details](how_I_advanced_rag.md))
 - **Phase G — Agent + MCP:** router + ticket/refund tools + PII guardrails; agent evals **10/10**; MCP server `foxschool-tickets` (2 tools)
+- **Phase H — Deploy:** Docker + **AWS EC2** (on-demand Start/Stop); live `/health` + `/ask` verified ([screenshot](docs/aws-deploy-demo.png))
 
 **Next**
 
-| Phase | Goal |
-|-------|------|
-| H — Deploy | Docker, second LLM provider, cloud hosting |
+| Project | Goal |
+|---------|------|
+| №2 `ai-ops-dashboard` | React chat + metrics panel (Vercel) |
