@@ -6,6 +6,7 @@ from openai import OpenAI
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from app.rag import ask
+from evals.snapshot import EVAL_METRICS_PATH, update_eval_snapshot
 
 JUDGE_PROMPT = """You evaluate a support chatbot.
 CONTEXT (retrieved from KB):
@@ -45,8 +46,13 @@ def main():
             passed += 1
         print(f"{case['id']}: {'PASS' if ok else 'FAIL'} — {verdict.get('reason')}")
     
-    rate = passed / len(cases) * 100
-    print(f"\nGroundedness: {passed}/{len(cases)} ({rate:.1f}%)")
+    total = len(cases)
+    rate = passed / total * 100
+    print(f"\nGroundedness: {passed}/{total} ({rate:.1f}%)")
+
+    update_eval_snapshot(llm_judge={"passed": passed, "total": total})
+    print(f"Updated {EVAL_METRICS_PATH.name}: llm_judge = {passed}/{total}")
+
     sys.exit(0 if rate >= 80 else 1)
 
 if __name__ == "__main__":

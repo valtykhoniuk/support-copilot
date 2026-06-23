@@ -1,7 +1,16 @@
 {
-  "golden_rag": { "passed": 25, "total": 25 },
-  "golden_agent": { "passed": 10, "total": 10 },
-  "llm_judge": { "passed": 19, "total": 20 },
+  "golden_rag": {
+    "passed": 25,
+    "total": 25
+  },
+  "golden_agent": {
+    "passed": 10,
+    "total": 10
+  },
+  "llm_judge": {
+    "passed": 19,
+    "total": 20
+  },
   "ragas": {
     "faithfulness": 0.99,
     "answer_relevancy": 0.92,

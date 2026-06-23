@@ -20,6 +20,7 @@ warnings.filterwarnings("ignore")  # hide ragas deprecation noise
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from app.rag import ask
+from evals.snapshot import EVAL_METRICS_PATH, update_eval_snapshot
 
 load_dotenv()
 
@@ -78,7 +79,17 @@ def main() -> None:
     print(df)
 
     print("\nAverage scores:")
-    print(df.mean(numeric_only=True))
+    averages = df.mean(numeric_only=True)
+    print(averages)
+
+    ragas_metrics = {
+        "faithfulness": round(float(averages["faithfulness"]), 2),
+        "answer_relevancy": round(float(averages["answer_relevancy"]), 2),
+        "context_precision": round(float(averages["context_precision"]), 2),
+        "context_recall": round(float(averages["context_recall"]), 2),
+    }
+    update_eval_snapshot(ragas=ragas_metrics)
+    print(f"Updated {EVAL_METRICS_PATH.name}: ragas = {ragas_metrics}")
 
     sys.exit(0)
 

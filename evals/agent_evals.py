@@ -4,6 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from app.agent import agent_ask
+from evals.snapshot import EVAL_METRICS_PATH, update_eval_snapshot
 
 REFUSAL_PHRASE = "I don't have that information in the knowledge base"
 
@@ -56,6 +57,9 @@ def main() -> None:
         print("\nFailed:")
         for f in failed:
             print(f"  {f['id']}: {f['reason']} (route={f.get('route')})")
+
+    update_eval_snapshot(golden_agent={"passed": passed, "total": total})
+    print(f"Updated {EVAL_METRICS_PATH.name}: golden_agent = {passed}/{total}")
 
     threshold = 80
     sys.exit(0 if rate >= threshold else 1)
