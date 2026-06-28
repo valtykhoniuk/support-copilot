@@ -1,7 +1,9 @@
 from pathlib import Path
 import json
+import os
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from app.agent import agent_ask
@@ -9,6 +11,21 @@ from app.agent import agent_ask
 METRICS_PATH = Path(__file__).parent.parent / "data" / "eval_metrics.json"
 
 app = FastAPI(title="FoxSchool Support Copilot")
+
+_cors_origins = os.getenv("CORS_ORIGINS", "*")
+allow_origins = (
+    ["*"]
+    if _cors_origins.strip() == "*"
+    else [o.strip() for o in _cors_origins.split(",") if o.strip()]
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allow_origins,
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class AskRequest(BaseModel):

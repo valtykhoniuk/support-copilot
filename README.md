@@ -35,7 +35,7 @@ POST /ask  →  agent_ask()
 | Piece | Choice |
 |-------|--------|
 | API | FastAPI — `/health`, `/ask` → `agent_ask()` |
-| Agent | Rule-based router + tools + guardrails (`agent.py`, `router.py`, `tools.py`) |
+| Agent | Router (keywords or optional **LoRA intent**) + tools + guardrails (`agent.py`, `router.py`, `intent_classifier.py`, `tools.py`) |
 | Vector DB | Chroma (local) — KB branch only |
 | Embeddings | `all-MiniLM-L6-v2` (local, free) |
 | Retrieval | Dense semantic search, top-5 (`RETRIEVAL_MODE=dense`) |
@@ -424,7 +424,7 @@ support-copilot/
 - **Dense search only** — hybrid BM25 + RRF tested twice, Hit@5 worse than dense; not deployed (see [how_I_advanced_rag.md](how_I_advanced_rag.md)).
 - **Heading chunking** — fixed chunk-level misses (e.g. FAQ sections); golden evals **25/25**; MRR slightly lower because duplicate facts rank from FAQ vs canonical docs.
 - **Keyword evals** — fast but brittle; Layer 2–3 add semantic checks. Golden source checks allow `expected_sources_any` when the same fact lives in multiple KB files.
-- **Rule-based router** — simple and testable; no LLM tool-calling loop yet. Ticket route wins over refund when both match.
+- **Router** — keywords by default; optional **LoRA intent router** from [finetune-vs-prompt](../finetune-vs-prompt) adapter ([`docs/LORA_ROUTER.md`](docs/LORA_ROUTER.md)). Ticket IDs stay regex; PII guardrails unchanged.
 
 ---
 
@@ -444,4 +444,4 @@ support-copilot/
 
 | Project | Goal |
 |---------|------|
-| №2 `ai-ops-dashboard` | React chat + metrics panel (Vercel) |
+| №2 [support-copilot-dashboard](https://github.com/valtykhoniuk/support-copilot-dashboard) | React chat + AI ops panel (Vercel) |

@@ -10,7 +10,13 @@ from app.guardrails import (
 )
 from app.metrics import estimate_cost, log_request
 from app.rag import ask as rag_ask
-from app.router import ROUTE_KB, ROUTE_REFUND, ROUTE_TICKET, extract_ticket_id, route
+from app.router import (
+    ROUTE_KB,
+    ROUTE_REFUND,
+    ROUTE_TICKET,
+    extract_ticket_id,
+    route_with_meta,
+)
 from app.tools import calculate_refund_eligibility, extract_days_from_question, lookup_ticket
 
 @traceable(name="handle_ticket")
@@ -64,8 +70,8 @@ def agent_ask(question: str) -> dict:
         log_request(question, result)
         return result
     
-    chosen_route = route(question)
-    
+    chosen_route, route_meta = route_with_meta(question)
+
     if chosen_route == ROUTE_TICKET:
         result = handle_ticket(question)
     elif chosen_route == ROUTE_REFUND:
@@ -73,6 +79,7 @@ def agent_ask(question: str) -> dict:
     else:
         result = rag_ask(question)
         result["route"] = ROUTE_KB
+    result.update(route_meta)
     if "latency_ms" not in result:
         result["latency_ms"] = round((time.perf_counter() - t0) * 1000, 2)
     if "cost_usd" not in result:
